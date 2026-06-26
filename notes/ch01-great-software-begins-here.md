@@ -54,6 +54,41 @@ if ((builder != null) && !builder.equals("") &&
 > enum 之所以對，不只是乾淨，而是它從根本消滅「大小寫/打錯字」這類
 > 讓功能出錯的可能——同時服務第 1 步（功能對）與第 2 步（靈活）。
 
-## 待續
-- §2：實際動手——把 `String` 換成 enum、`search()` 改回傳 `List`、抽出 `GuitarSpec` 解耦。
-- 用 PHP 重寫 `Guitar` / `Inventory`，重現 bug 再修。
+## §2 動手：用 enum 修掉 bug（PHP）
+
+### §2-1 重現 bug
+`code/ch01/` 用 PHP 忠實重寫爛版本：`Guitar`(一堆 string + getter)、`Inventory`(`search()` 用 `===` 字串比對)。
+跑 `find_guitar.php` → `Sorry, Erin, we have nothing for you.`，bug 重現（`'fender'` vs `'Fender'`）。
+
+### §2-2 做出 Builder enum（`exercises/ch01-02-builder-enum.php`）
+```php
+enum Builder: string {
+    case FENDER = 'Fender';
+    case GIBSON = 'Gibson';
+    case MARTIN = 'Martin';
+    public function label(): string { return $this->value; }
+}
+```
+學到的 enum 語法：
+- `enum 名稱: string { case X = '值'; }`：backed enum，每個 case 綁一個純量值。
+- `Builder::cases()` 回所有 case 的陣列。
+- `Builder::from('Fender')` 合法值取 case；**`from('不存在')` 丟例外**。
+- `Builder::tryFrom('fender')` 非法值**回 `null`**（不丟例外）→ 小寫在這步就被擋掉。
+- `$case->name`（常數名 `'FENDER'`）vs `$case->value`（綁的值 `'Fender'`）。
+
+### §2-3 把 enum 接回物件（`exercises/ch01-03-guitar-with-enum.php`）
+- `Guitar` 的 `builder` 型別 `string` → `Builder`（屬性、getter 回傳、`addGuitar` 參數都改）。
+- `search()` 比對：`$searchGuitar->getBuilder() !== $guitar->getBuilder()`
+  —— 兩個都是 enum，`!==` 直接比「是不是同一個 case」(case 是 singleton)，免 `.equals()`、免管大小寫。
+- **威力點**：`new Guitar('', 0, 'fender', ...)` 會丟 `TypeError`。
+  髒值從「搜尋時才發現」提前到「建立物件就擋下」——**錯誤提早到最早能抓到的地方**。
+
+> 心法回顧：治標(字串比對時防呆) vs 治本(型別系統讓非法值寫不出來)。enum 是治本。
+
+### error 種類小辨
+- **Parse error**：文法不通（如 enum 漏寫 `enum` 關鍵字、留 `___` 在型別位置）。
+- **Error / Exception**：文法通、執行時才出事（如 `___` 被當成沒定義的常數 → `Undefined constant`）。
+
+## 待續 §2-4
+- `search()` 改回傳「清單」(Jill 的觀點)：一次回所有符合的吉他，不只第一把。
+- 進一步：把搜尋條件抽成獨立的 `GuitarSpec`，解開 `Inventory` 與 `Guitar` 的耦合(Frank 的觀點)。

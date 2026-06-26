@@ -35,7 +35,7 @@ class Guitar
         private float $price,
         // ── TODO 1：builder 不再是 string。把型別改成我們的 enum。──
         //   提示：型別名稱就是 enum 的名字。
-        private ___ $builder,
+        private Builder $builder,
         private string $model,
     ) {
     }
@@ -51,7 +51,7 @@ class Guitar
     }
 
     // ── TODO 2：getter 回傳的也不再是 string，回傳型別跟著改成 enum。──
-    public function getBuilder(): ___
+    public function getBuilder(): Builder
     {
         return $this->builder;
     }
@@ -74,7 +74,7 @@ class Inventory
         string $serialNumber,
         float $price,
         // ── TODO 3：這個參數型別也要改成 enum（跟 Guitar 一致）。──
-        ___ $builder,
+        Builder $builder,
         string $model,
     ): void {
         $this->guitars[] = new Guitar($serialNumber, $price, $builder, $model);
@@ -86,7 +86,7 @@ class Inventory
             // ── TODO 4：比對 builder。──
             //   兩個都是 Builder enum，直接用 !== 比「是不是同一個 case」。
             //   不一樣就 continue 跳過。把 ___ 換成「庫存這把吉他的 builder」。
-            if ($searchGuitar->getBuilder() !== ___) {
+            if ($searchGuitar->getBuilder() !== $guitar->getBuilder() ) {
                 continue;
             }
 
